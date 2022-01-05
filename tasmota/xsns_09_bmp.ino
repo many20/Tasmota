@@ -56,6 +56,7 @@ typedef struct {
 #ifdef USE_BME680
   uint8_t bme680_state;
   float bmp_gas_resistance;
+  float bmp_tvoc;
 #endif  // USE_BME680
   float bmp_temperature;
   float bmp_pressure;
@@ -67,6 +68,14 @@ uint8_t bmp_count = 0;
 uint8_t bmp_once = 1;
 
 bmp_sensors_t *bmp_sensors = nullptr;
+
+#ifdef USE_BME680
+  float bmp_680_calc_tvoc_abs_humidity_filtered = 0;
+  uint8_t bmp_680_calc_tvoc_valid_delay = 0;
+  float bmp_680_calc_tvoc_base = 0;
+  uint8_t bmp_680_calc_tvoc_delay = 0;
+  float bmp_680_calc_tvoc = 0;  
+#endif  // USE_BME680
 
 /*********************************************************************************************\
  * BMP085 and BME180
@@ -437,6 +446,8 @@ void Bme680Read(uint8_t bmp_idx)
       /* Avoid using measurements from an unstable heating setup */
       if (data.status & BME680_GASM_VALID_MSK) {
         bmp_sensors[bmp_idx].bmp_gas_resistance = data.gas_resistance / 1000.0;
+        float abs_h = CalcAbsHum(bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
+        Bme680CalcTVoc(bmp_idx, data.gas_resistance, abs_h);
       } else {
         bmp_sensors[bmp_idx].bmp_gas_resistance = 0;
       }
@@ -445,7 +456,60 @@ void Bme680Read(uint8_t bmp_idx)
   return;
 }
 
+void Bme680CalcTVoc(uint8_t bmp_idx, float r, float abs_h)
+{
+  if (r == 0 || abs_h == 0) return;
+
+  // Serial.print("base:");
+  // Serial.println(bmp_680_calc_tvoc_base);
+
+  if (bmp_680_calc_tvoc_valid_delay >= 50) { //300
+
+    bmp_680_calc_tvoc_abs_humidity_filtered = (bmp_680_calc_tvoc_abs_humidity_filtered == 0 || abs_h < bmp_680_calc_tvoc_abs_humidity_filtered) ? abs_h : bmp_680_calc_tvoc_abs_humidity_filtered + 0.2 * (abs_h - bmp_680_calc_tvoc_abs_humidity_filtered); 
+    Bme680TVocUpdateBase(r, abs_h);
+    
+    float v = (r * (bmp_680_calc_tvoc_abs_humidity_filtered * 7.0F));
+    float ratio = v / bmp_680_calc_tvoc_base;
+    float tV = (1250 * log(ratio)) + 125;                     // approximation
+    bmp_680_calc_tvoc = (bmp_680_calc_tvoc == 0) ? tV : bmp_680_calc_tvoc + 0.1 * (tV - bmp_680_calc_tvoc);
+    bmp_sensors[bmp_idx].bmp_tvoc = bmp_680_calc_tvoc;
+
+    // Serial.print("tvoc:");
+    // Serial.println(bmp_680_calc_tvoc);
+  } else {
+    bmp_680_calc_tvoc_valid_delay++;
+    Bme680TVocUpdateBase_burn_in(r, abs_h);
+  }
+}
+
+void Bme680TVocUpdateBase_burn_in(float r, float abs_h) 
+{
+  //--- automatic baseline correction
+  uint32_t base = r * (abs_h * 7.0F);
+  if (bmp_680_calc_tvoc_base == 0) {
+    bmp_680_calc_tvoc_base = base;
+  } else {
+    bmp_680_calc_tvoc_base = (bmp_680_calc_tvoc_base + base) / 2;
+  }
+};
+
+void Bme680TVocUpdateBase(float r, float abs_h) 
+{
+  //--- automatic baseline correction / smallest value / best value
+  uint32_t base = r * (abs_h * 7.0F);
+  if (base < bmp_680_calc_tvoc_base && bmp_680_calc_tvoc_delay > 20) //50
+  {
+    // ensure that new baseC is stable for at least >5*10sec (clean air)
+    bmp_680_calc_tvoc_base = base;
+  } else if (base < bmp_680_calc_tvoc_base) {
+    bmp_680_calc_tvoc_delay++;
+  } else {
+    bmp_680_calc_tvoc_delay = 0;
+  };
+};
+
 #endif  // USE_BME680
+
 
 /********************************************************************************************/
 
@@ -535,22 +599,27 @@ void BmpShow(bool json)
       float bmp_humidity = ConvertHumidity(bmp_sensors[bmp_idx].bmp_humidity);
       char humidity[33];
       dtostrfd(bmp_humidity, Settings->flag2.humidity_resolution, humidity);
+      float bmp_abs_humidity = CalcAbsHum(bmp_temperature, bmp_humidity);
+      char abs_humidity[33];
+      dtostrfd(bmp_abs_humidity, Settings->flag2.humidity_resolution, abs_humidity);
       float f_dewpoint = CalcTempHumToDew(bmp_temperature, bmp_humidity);
       char dewpoint[33];
       dtostrfd(f_dewpoint, Settings->flag2.temperature_resolution, dewpoint);
 #ifdef USE_BME680
       char gas_resistance[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_gas_resistance, 2, gas_resistance);
+      char tvoc[33];
+      dtostrfd(bmp_sensors[bmp_idx].bmp_tvoc, 2, tvoc);
 #endif  // USE_BME680
 
       if (json) {
-        char json_humidity[80];
-        snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), humidity, dewpoint);
+        char json_humidity[130];
+        snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_ABSOLUTE D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), humidity, abs_humidity, dewpoint);
         char json_sealevel[40];
         snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
 #ifdef USE_BME680
-        char json_gas[40];
-        snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
+        char json_gas[80];
+        snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s,\"" D_JSON_AIRQUALITY "\":%s"), gas_resistance, tvoc);
 
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
           name,
@@ -585,6 +654,7 @@ void BmpShow(bool json)
         WSContentSend_Temp(name, bmp_temperature);
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
           WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
+          WSContentSend_PD(HTTP_SNS_ABS_HUM, name, abs_humidity);
           WSContentSend_PD(HTTP_SNS_DEW, name, dewpoint, TempUnit());
         }
         WSContentSend_PD(HTTP_SNS_PRESSURE, name, pressure, PressureUnit().c_str());
@@ -594,6 +664,7 @@ void BmpShow(bool json)
 #ifdef USE_BME680
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
           WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
+          WSContentSend_PD(PSTR("{s}%s " D_AIR_QUALITY "{m}%s "                "{e}"), name, tvoc);
         }
 #endif  // USE_BME680
 
