@@ -614,7 +614,7 @@ void BmpShow(bool json)
 
       if (json) {
         char json_humidity[130];
-        snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_ABSOLUTE D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), humidity, abs_humidity, dewpoint);
+        snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_ABSOLUTE_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), humidity, abs_humidity, dewpoint);
         char json_sealevel[40];
         snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
 #ifdef USE_BME680
@@ -663,8 +663,8 @@ void BmpShow(bool json)
         }
 #ifdef USE_BME680
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
-          WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
-          WSContentSend_PD(PSTR("{s}%s " D_AIR_QUALITY "{m}%s "                "{e}"), name, tvoc);
+          WSContentSend_PD(HTTP_SNS_GAS_RES, name, gas_resistance);
+          WSContentSend_PD(HTTP_SNS_AIR_QUALITY, name, tvoc);
         }
 #endif  // USE_BME680
 

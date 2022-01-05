@@ -881,10 +881,10 @@ const char HTTP_SNS_COLOR_GREEN[]   PROGMEM = "{s}%s "  D_COLOR_GREEN         "{
 const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{m}%u "                            "{e}";
 const char HTTP_SNS_MILLILITERS[]   PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_MILLILITERS         "{e}";
 const char HTTP_SNS_GAS[]           PROGMEM = "{s}%s "  D_GAS                 "{m}%d " D_UNIT_PERCENT          "LEL{e}";
-const char HTTP_SNS_GAS_RES[]       PROGMEM = "{s}%s "  D_GAS                 "{m}%d " D_UNIT_KILOOHM              "{e}";
+const char HTTP_SNS_GAS_RES[]       PROGMEM = "{s}%s "  D_GAS                 "{m}%s " D_UNIT_KILOOHM              "{e}";
 const char HTTP_SNS_SOC[]           PROGMEM = "{s}%s "  D_SOC                 "{m}%d " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_SOH[]           PROGMEM = "{s}%s "  D_SOH                 "{m}%d " D_UNIT_PERCENT             "{e}";
-const char HTTP_SNS_AIR_QUALITY[]   PROGMEM = "{s}%s "  D_AIR_QUALITY         "{m}%d "                            "{e}";
+const char HTTP_SNS_AIR_QUALITY[]   PROGMEM = "{s}%s "  D_AIR_QUALITY         "{m}%s "                            "{e}";
 #endif  // USE_WEBSERVER
 
 #endif  // _I18N_H_
