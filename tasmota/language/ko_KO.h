@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Absolute 습도"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "공기질"
 #define D_AP "AP"                    // Access Point
@@ -869,6 +870,7 @@
 #define D_UNIT_LITERS_PER_MIN "L/m"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_MICROMETER "마이크로미터"
 #define D_UNIT_MICROSECOND "마이크로초"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"

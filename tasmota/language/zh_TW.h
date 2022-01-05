@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Absolute 濕度"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "空氣品質"
 #define D_AP "存取點"                    // Access Point
@@ -869,6 +870,7 @@
 #define D_UNIT_LITERS_PER_MIN "L/m"
 #define D_UNIT_LUX "lux"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "微克/立方公尺"
+#define D_UNIT_GRAM_PER_CUBIC_METER "克/立方公尺"
 #define D_UNIT_MICROMETER "微米"
 #define D_UNIT_MICROSECOND "微秒"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"

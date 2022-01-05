@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Absolute Влажность"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Качество воздуха"
 #define D_AP "AP"                    // Access Point
@@ -869,6 +870,7 @@
 #define D_UNIT_LITERS_PER_MIN "л/мин"
 #define D_UNIT_LUX "лк"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "мкг/м³"
+#define D_UNIT_GRAM_PER_CUBIC_METER "кг/м³"
 #define D_UNIT_MICROMETER "мкм"
 #define D_UNIT_MICROSECOND "мкс"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
