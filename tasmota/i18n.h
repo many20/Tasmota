@@ -144,6 +144,7 @@
 #define D_JSON_PROBETEMPERATURE "ProbeTemperature"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_STACKLOWMARK "StackLowMark"
 #define D_JSON_PSRMAXMEMORY "PsrMax"
 #define D_JSON_PSRFREEMEMORY "PsrFree"
 #define D_JSON_PUMP "Pumped"
@@ -549,6 +550,7 @@
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
 #define D_CMND_SBAUDRATE "SBaudrate"
+#define D_CMND_SSERIALCONFIG "SSerialConfig"
   #define D_JSON_SSERIALRECEIVED "SSerialReceived"
 
 // Commands xdrv_09_timers.ino
