@@ -460,29 +460,24 @@ void Bme680CalcTVoc(uint8_t bmp_idx, float r, float abs_h)
 {
   if (r == 0 || abs_h == 0) return;
 
-  // Serial.print("base:");
-  // Serial.println(bmp_680_calc_tvoc_base);
-
   if (bmp_680_calc_tvoc_valid_delay >= 50) { //300
 
     bmp_680_calc_tvoc_abs_humidity_filtered = (bmp_680_calc_tvoc_abs_humidity_filtered == 0 || abs_h < bmp_680_calc_tvoc_abs_humidity_filtered) ? abs_h : bmp_680_calc_tvoc_abs_humidity_filtered + 0.2 * (abs_h - bmp_680_calc_tvoc_abs_humidity_filtered); 
     Bme680TVocUpdateBase(r, abs_h);
     
     float v = (r * (bmp_680_calc_tvoc_abs_humidity_filtered * 7.0F));
-    float ratio = v / bmp_680_calc_tvoc_base;
+    float ratio = bmp_680_calc_tvoc_base / v; // ~1 -> is fresh air, >1 -> bad air
     float tV = (1250 * log(ratio)) + 125;                     // approximation
     bmp_680_calc_tvoc = (bmp_680_calc_tvoc == 0) ? tV : bmp_680_calc_tvoc + 0.1 * (tV - bmp_680_calc_tvoc);
     bmp_sensors[bmp_idx].bmp_tvoc = bmp_680_calc_tvoc;
 
-    // Serial.print("tvoc:");
-    // Serial.println(bmp_680_calc_tvoc);
   } else {
     bmp_680_calc_tvoc_valid_delay++;
-    Bme680TVocUpdateBase_burn_in(r, abs_h);
+    Bme680TVocUpdateBase_burnIn(r, abs_h);
   }
 }
 
-void Bme680TVocUpdateBase_burn_in(float r, float abs_h) 
+void Bme680TVocUpdateBase_burnIn(float r, float abs_h) 
 {
   //--- automatic baseline correction
   uint32_t base = r * (abs_h * 7.0F);
@@ -495,13 +490,13 @@ void Bme680TVocUpdateBase_burn_in(float r, float abs_h)
 
 void Bme680TVocUpdateBase(float r, float abs_h) 
 {
-  //--- automatic baseline correction / smallest value / best value
+  //--- automatic baseline correction / greater is fresh air (best)
   uint32_t base = r * (abs_h * 7.0F);
-  if (base < bmp_680_calc_tvoc_base && bmp_680_calc_tvoc_delay > 20) //50
+  if (base > bmp_680_calc_tvoc_base && bmp_680_calc_tvoc_delay > 20) //50
   {
     // ensure that new baseC is stable for at least >5*10sec (clean air)
     bmp_680_calc_tvoc_base = base;
-  } else if (base < bmp_680_calc_tvoc_base) {
+  } else if (base > bmp_680_calc_tvoc_base) {
     bmp_680_calc_tvoc_delay++;
   } else {
     bmp_680_calc_tvoc_delay = 0;
